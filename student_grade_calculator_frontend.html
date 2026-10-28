@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Grade Calculator</title>
+  <style>
+    :root { --blue:#2563eb; --blue-dark:#1d4ed8; --bg:#f3f6fb; --text:#172033; --muted:#64748b; --border:#dbe3ef; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text); }
+    .topbar { background:linear-gradient(120deg,#1d4ed8,#6366f1); color:white; padding:28px 20px 70px; }
+    .topbar-inner { max-width:1100px; margin:auto; }
+    .eyebrow { text-transform:uppercase; letter-spacing:2px; font-size:.75rem; opacity:.85; font-weight:bold; }
+    h1 { margin:9px 0; font-size:clamp(1.8rem,4vw,2.6rem); }
+    .topbar p { margin:0; max-width:620px; line-height:1.6; opacity:.94; }
+    .layout { max-width:1100px; margin:-45px auto 40px; padding:0 18px; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:20px; align-items:start; }
+    .panel { background:white; border:1px solid var(--border); border-radius:16px; padding:22px; box-shadow:0 10px 30px rgba(23,32,51,.07); }
+    .panel h2 { margin:0 0 7px; font-size:1.2rem; }
+    .subtext { margin:0 0 20px; color:var(--muted); font-size:.92rem; line-height:1.5; }
+    .subject-row { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(90px,.7fr) auto; gap:9px; margin:10px 0; }
+    input { width:100%; min-width:0; border:1px solid var(--border); border-radius:9px; padding:12px; font:inherit; outline:none; }
+    input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+    button { border:0; border-radius:9px; padding:12px 15px; font:inherit; font-weight:bold; cursor:pointer; transition:transform .12s, background .12s; }
+    button:active { transform:scale(.98); }
+    .remove { background:#fee2e2; color:#b91c1c; padding:0 12px; }
+    .remove:hover { background:#fecaca; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .btn-primary { background:var(--blue); color:white; flex:1; }
+    .btn-primary:hover { background:var(--blue-dark); }
+    .btn-light { background:#eaf0ff; color:var(--blue-dark); }
+    .results { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:18px 0; }
+    .stat { background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:16px; }
+    .stat span { display:block; color:var(--muted); font-size:.82rem; margin-bottom:9px; }
+    .stat strong { font-size:1.55rem; overflow-wrap:anywhere; }
+    .stat.average { background:#eff6ff; border-color:#bfdbfe; }
+    .stat.average strong { color:var(--blue-dark); }
+    .status { border-radius:11px; background:#f1f5f9; color:#334155; padding:14px; line-height:1.5; }
+    .status.good { background:#dcfce7; color:#166534; }
+    .status.ok { background:#fef3c7; color:#92400e; }
+    .status.low { background:#fee2e2; color:#991b1b; }
+    .table-wrap { overflow-x:auto; margin-top:18px; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th,td { padding:11px 10px; text-align:left; border-bottom:1px solid var(--border); }
+    th { background:#f1f5f9; color:#334155; }
+    .hint { color:var(--muted); font-size:.82rem; line-height:1.5; margin:16px 0 0; }
+    footer { text-align:center; color:var(--muted); padding:0 18px 28px; font-size:.85rem; }
+    @media (max-width:760px) { .layout { grid-template-columns:1fr; margin-top:-38px; } .topbar { padding-bottom:60px; } .panel { padding:18px; } }
+    @media (max-width:430px) { .subject-row { grid-template-columns:1fr 92px auto; gap:6px; } input { padding:10px 8px; font-size:.9rem; } .remove { padding:0 10px; } .results { gap:8px; } .stat { padding:12px; } .stat strong { font-size:1.3rem; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="eyebrow">A beginner web development project</div>
+      <h1>Student Grade Calculator</h1>
+      <p>Add your subjects and marks to calculate your average, identify your highest and lowest scores, and see a simple performance summary.</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel" aria-labelledby="input-title">
+      <h2 id="input-title">Enter your marks</h2>
+      <p class="subtext">Use marks between 0 and 100. Add or remove subjects as needed.</p>
+      <div id="subjects">
+        <div class="subject-row">
+          <input class="subject-name" type="text" placeholder="Subject (e.g. Mathematics)" aria-label="Subject name">
+          <input class="subject-mark" type="number" min="0" max="100" step="any" placeholder="Mark / 100" aria-label="Mark out of 100">
+          <button class="remove" type="button" aria-label="Remove subject" title="Remove subject">×</button>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn-light" id="add-subject" type="button">＋ Add subject</button>
+        <button class="btn-primary" id="calculate" type="button">Calculate results</button>
+      </div>
+      <p class="hint">Tip: This project runs locally in your browser. It does not upload or save your marks to a server.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="results-title">
+      <h2 id="results-title">Your results</h2>
+      <p class="subtext">Your summary will appear here after you calculate.</p>
+      <div class="results" aria-live="polite">
+        <div class="stat average"><span>Average mark</span><strong id="average">—</strong></div>
+        <div class="stat"><span>Subjects</span><strong id="count">0</strong></div>
+        <div class="stat"><span>Highest mark</span><strong id="highest">—</strong></div>
+        <div class="stat"><span>Lowest mark</span><strong id="lowest">—</strong></div>
+      </div>
+      <div id="status" class="status">Enter at least one subject and a valid mark, then select “Calculate results.”</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Subject</th><th>Mark</th></tr></thead>
+          <tbody id="summary"><tr><td colspan="2">No results yet.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer>Student Grade Calculator · Built with HTML, CSS and JavaScript · Educational project</footer>
+
+  <script>
+    const subjectsContainer = document.getElementById('subjects');
+    const summary = document.getElementById('summary');
+
+    function addSubject(name = '', mark = '') {
+      const row = document.createElement('div');
+      row.className = 'subject-row';
+      row.innerHTML = `
+        <input class="subject-name" type="text" placeholder="Subject (e.g. Mathematics)" aria-label="Subject name" value="${escapeAttribute(name)}">
+        <input class="subject-mark" type="number" min="0" max="100" step="any" placeholder="Mark / 100" aria-label="Mark out of 100" value="${escapeAttribute(mark)}">
+        <button class="remove" type="button" aria-label="Remove subject" title="Remove subject">×</button>`;
+      row.querySelector('.remove').addEventListener('click', () => {
+        row.remove();
+      });
+      subjectsContainer.appendChild(row);
+    }
+
+    function escapeAttribute(value) {
+      return String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+    }
+
+    // Attach the remove action to the first row already in the HTML.
+    subjectsContainer.querySelector('.remove').addEventListener('click', (event) => {
+      event.currentTarget.closest('.subject-row').remove();
+    });
+
+    document.getElementById('add-subject').addEventListener('click', () => addSubject());
+
+    document.getElementById('calculate').addEventListener('click', () => {
+      const rows = [...subjectsContainer.querySelectorAll('.subject-row')];
+      const entries = [];
+      for (let i = 0; i < rows.length; i++) {
+        const nameInput = rows[i].querySelector('.subject-name');
+        const markInput = rows[i].querySelector('.subject-mark');
+        const name = nameInput.value.trim() || `Subject ${i + 1}`;
+        const rawMark = markInput.value.trim();
+        const mark = Number(rawMark);
+        if (rawMark === '' || !Number.isFinite(mark) || mark < 0 || mark > 100) {
+          markInput.focus();
+          showError(`Please enter a mark from 0 to 100 for ${name}.`);
+          return;
+        }
+        entries.push({ name, mark });
+      }
+      if (entries.length === 0) {
+        showError('Please add at least one subject and enter a mark.');
+        return;
+      }
+
+      const marks = entries.map(item => item.mark);
+      const average = marks.reduce((sum, mark) => sum + mark, 0) / marks.length;
+      document.getElementById('average').textContent = average.toFixed(2);
+      document.getElementById('count').textContent = String(entries.length);
+      document.getElementById('highest').textContent = String(Math.max(...marks));
+      document.getElementById('lowest').textContent = String(Math.min(...marks));
+      summary.replaceChildren();
+      entries.forEach(item => {
+        const tr = document.createElement('tr');
+        const nameCell = document.createElement('td');
+        const markCell = document.createElement('td');
+        nameCell.textContent = item.name;
+        markCell.textContent = String(item.mark);
+        tr.append(nameCell, markCell);
+        summary.appendChild(tr);
+      });
+
+      const status = document.getElementById('status');
+      status.className = 'status';
+      let rating;
+      if (average >= 90) { rating = 'Excellent — outstanding work!'; status.classList.add('good'); }
+      else if (average >= 75) { rating = 'Good — you are making solid progress.'; status.classList.add('good'); }
+      else if (average >= 60) { rating = 'Satisfactory — keep practising.'; status.classList.add('ok'); }
+      else { rating = 'Keep working — review the topics you find difficult.'; status.classList.add('low'); }
+      status.textContent = `Performance: ${rating}`;
+    });
+
+    function showError(message) {
+      const status = document.getElementById('status');
+      status.className = 'status low';
+      status.textContent = message;
+    }
+  </script>
+</body>
+</html>
